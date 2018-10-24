@@ -87,8 +87,7 @@ public class CBoard : MonoBehaviour  {
 		this.m_ExitButton = this.transform.Find("MenuPanel/ExitButton").GetComponent<Button>();
 		this.m_ExitButton.onClick.RemoveAllListeners();
 		this.m_ExitButton.onClick.AddListener(() => {
-			this.DeleteSave();
-			SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+			this.ResetBoard ();
 		});
 		// EXPLOSION
 		this.m_IsExplosing = false;
@@ -127,6 +126,12 @@ public class CBoard : MonoBehaviour  {
 		this.m_CanUndo = true;
 	}
 
+	public virtual void ResetBoard()
+	{
+		this.DeleteSave();
+		SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+	}
+
 	public virtual void CheckHand()
 	{
 		if (this.m_IsInited == false)
@@ -144,6 +149,7 @@ public class CBoard : MonoBehaviour  {
 			this.DeleteSave();
 			this.ExplosionAllCards (() => {
 				Debug.Log ("COMPLETE MAP");
+				this.ResetBoard ();
 			});
 		}
 	}
@@ -170,6 +176,11 @@ public class CBoard : MonoBehaviour  {
 		}
 		// EXPLOSION
 		this.m_IsExplosing = false;
+		// EVENTS
+		if(callback != null)
+		{
+			callback();
+		} 
 	}
 
 	#endregion

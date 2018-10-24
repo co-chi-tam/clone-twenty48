@@ -71,7 +71,7 @@ public class CCard : MonoBehaviour,
 		}
 	}
 
-	[SerializeField]	protected Vector2 m_Size = new Vector2(195f, 260f);
+	[SerializeField]	protected Vector2 m_Size = new Vector2(196f, 260f);
 	public Vector2 size 
 	{ 
 		get { return this.m_Size; }
@@ -137,6 +137,8 @@ public class CCard : MonoBehaviour,
 		set { this.m_OnHand = value; }
 	}
 
+	protected RectTransform m_RectTransform;
+
 	protected WaitForFixedUpdate m_WaitFixedUpdate = new WaitForFixedUpdate();
 	protected bool m_IsMoving = false;
 
@@ -175,6 +177,7 @@ public class CCard : MonoBehaviour,
 	public virtual void Init()
 	{
 		// UI
+		this.m_RectTransform = this.transform as RectTransform;
 		this.m_BGImage = this.transform.Find("BGImage").GetComponent<Image>();
 		this.m_FirstStartPosition = this.m_BGImage.transform.localPosition;
 		this.lastPosition = this.m_FirstStartPosition;
@@ -218,6 +221,11 @@ public class CCard : MonoBehaviour,
 		this.m_CardType = type;
 		// ONHAND
 		this.m_OnHand = onHand;
+	}
+
+	public virtual void ResetSize()
+	{
+		this.m_RectTransform.sizeDelta = this.m_Size;
 	}
 
 	public virtual void Move(float wait, Vector3 to, Vector2 from, float time, System.Action complete)
@@ -325,7 +333,8 @@ public class CCard : MonoBehaviour,
 		{
 			Vector3 offsetToOriginal = localPointerPosition - originalLocalPointerPosition;
 			var move = originalPanelLocalPosition + offsetToOriginal;
-			dragObjectInternal.localPosition = move;
+			var delta = Vector3.Lerp(dragObjectInternal.localPosition, move, 0.5f);
+			dragObjectInternal.localPosition = delta;
 			this.lastPosition = Camera.main.WorldToScreenPoint (dragObjectInternal.position);
 		}
 	}

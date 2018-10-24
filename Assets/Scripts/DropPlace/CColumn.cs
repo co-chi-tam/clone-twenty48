@@ -29,7 +29,7 @@ public class CColumn : MonoBehaviour,
 	protected CGroupCard m_Group;
 	protected CBoard m_Board;
 	
-	protected LayoutGroup m_LayoutGroup;
+	protected VerticalLayoutGroup m_LayoutGroup;
 	protected Transform m_FirstCard;
 	protected Transform m_FirstCardPoint;
 	protected bool m_OnAnimatingCard = false;
@@ -39,7 +39,8 @@ public class CColumn : MonoBehaviour,
 		set { this.m_OnAnimatingCard = value; }
 	}
 	protected WaitForFixedUpdate m_WaitFixedUpdate = new WaitForFixedUpdate();
-    private RectTransform m_RectTransform = null;
+    protected RectTransform m_RectTransform = null;
+	protected bool m_IsExplosing = false;
 	
 	#endregion
 
@@ -60,7 +61,8 @@ public class CColumn : MonoBehaviour,
 		this.m_RectTransform = this.transform as RectTransform;
 		// GROUP
 		this.m_Group = GameObject.FindObjectOfType<CGroupCard>();
-		this.m_LayoutGroup = this.GetComponent<LayoutGroup>();
+		this.m_LayoutGroup = this.GetComponent<VerticalLayoutGroup>();
+		this.m_LayoutGroup.enabled = false;
 		// BOARD
 		this.m_Board = GameObject.FindObjectOfType<CBoard>();
 		// FIRST CARD
@@ -81,7 +83,7 @@ public class CColumn : MonoBehaviour,
 		}
 		this.m_Cards = new List<CCard>();
 		// ENABLE LAYOUT GROUP
-		this.m_LayoutGroup.enabled = true;
+		// this.m_LayoutGroup.enabled = true;
 		this.m_FirstCard.gameObject.SetActive(true);
 	}
 
@@ -99,7 +101,11 @@ public class CColumn : MonoBehaviour,
 		var lastCard = Camera.main.WorldToScreenPoint (this.GetLastCardPosition());
 		var from = this.ConvertScreenToLocal (this.m_RectTransform, lastCard);
 		// UPDATE
-		if (this.m_Cards.Count < this.m_MaximumCards)
+		if (this.m_Cards.Count == 0)
+		{
+			this.AddCardToList (0.2f, 0.2f, card, to, from);
+		}
+		else if (this.m_Cards.Count > 0 && this.m_Cards.Count < this.m_MaximumCards)
 		{
 			from.y -= this.m_HeighOffset;
 			this.AddCardToList (0.2f, 0.2f, card, to, from);
@@ -113,11 +119,12 @@ public class CColumn : MonoBehaviour,
 	public virtual void AddCardImmediate(CCard card)
 	{
 		// UI
+		// this.m_LayoutGroup.enabled = true;
 		this.m_FirstCard.gameObject.SetActive(false);
-		this.m_LayoutGroup.enabled = true;
+		// POSITION
 		var lastCard = Camera.main.WorldToScreenPoint (this.GetLastCardPosition());
 		var locaPosition = this.ConvertScreenToLocal (this.m_RectTransform, lastCard);
-		if (this.m_Cards.Count < this.m_MaximumCards)
+		if (this.m_Cards.Count > 0 && this.m_Cards.Count < this.m_MaximumCards)
 		{
 			locaPosition.y -= this.m_HeighOffset;
 		}
@@ -145,19 +152,20 @@ public class CColumn : MonoBehaviour,
 				moveTime, 
 				() => {
 					// ENABLE LAYOUT GROUP
-					this.m_LayoutGroup.enabled = this.m_Cards.Count < this.m_MaximumCards;
+					// this.m_LayoutGroup.enabled = this.m_Cards.Count < this.m_MaximumCards;
 					this.m_FirstCard.gameObject.SetActive(false);
 					// CARD SETTING
 					card.transform.SetParent (this.transform);
 					card.SetAnimation(CCard.EAnimation.DROPPED);
 					// UPDATE
-					// card.transform.localPosition = Vector3.zero;
 					card.transform.localRotation = Quaternion.identity;
 					card.transform.localScale = Vector3.one;
 					// ADD
 					this.m_Cards.Add (card);
 					// CHECK
-					this.CheckCombineCards(null);
+					this.CheckCombineCards(() => {
+						this.Check2048Card();
+					});
 					// UPDATE
 					card.OnHandDropCard();
 				});
@@ -241,7 +249,7 @@ public class CColumn : MonoBehaviour,
 		// UNCHECK CALCULATE
 		this.m_OnAnimatingCard = false;
 		// ENABLE LAYOUT GROUP
-		this.m_LayoutGroup.enabled = true;
+		// this.m_LayoutGroup.enabled = true;
 		// BOARD CHECK
 		this.m_Board.CheckHand();
 		// EVENTS
@@ -299,13 +307,49 @@ public class CColumn : MonoBehaviour,
 		// UNCHECK CALCULATE
 		this.m_OnAnimatingCard = false;
 		// ENABLE LAYOUT GROUP
-		this.m_LayoutGroup.enabled = true;
+		// this.m_LayoutGroup.enabled = true;
 		// BOARD CHECK
 		this.m_Board.CheckHand();
 		// EVENTS
 		if (complete != null)
 		{
 			complete();
+		}
+	}
+
+	public virtual void Check2048Card()
+	{
+		for (int i = 0; i < this.m_Cards.Count; i++)
+		{
+			if (this.m_Cards[i].value >= 2048)
+			{
+				this.ExplosionAllCards(null);
+			}
+		}
+	}
+
+	public virtual void ExplosionAllCards(System.Action callback)
+	{
+		if (this.m_IsExplosing)
+			return;
+		this.m_IsExplosing = true;
+		StartCoroutine (this.HandleExplosionAllCards(callback));
+	}
+
+	protected WaitForSeconds m_WaitSortTime = new WaitForSeconds(0.1f);
+	protected IEnumerator HandleExplosionAllCards(System.Action callback)
+	{
+		for (int i = 0; i < this.m_Cards.Count; i++)
+		{
+			yield return this.m_WaitSortTime;
+			this.m_Cards[i].Explosion();
+		}
+		// EXPLOSION
+		this.m_IsExplosing = false;
+		// CALL EVENTS
+		if (callback != null)
+		{
+			callback();
 		}
 	}
 
