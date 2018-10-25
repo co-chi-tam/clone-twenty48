@@ -69,7 +69,7 @@ public class CRemoveCard : MonoBehaviour,
 		var from = this.m_FilledImage.transform.localPosition;
 		// MOVE
 		card.SetAnimation(CCard.EAnimation.DISAPPEAR);
-		card.Move (0.1f, to, from, 0.3f, () => {
+		card.Move (0.13f, to, from, 0.17f, () => {
 			card.OnDropCard(Vector2.zero);
 			card.OnHandDropCard();
 			card.SetActive (false);

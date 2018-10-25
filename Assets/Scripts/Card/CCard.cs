@@ -17,7 +17,7 @@ public class CCard : MonoBehaviour,
 
 	public enum EAnimation: int
 	{
-		NONE = 0,
+		IDLE = 0,
 		DROPPED = 1,
 		COMBINE = 2,
 		APPEAR = 3,
@@ -54,6 +54,7 @@ public class CCard : MonoBehaviour,
 		set 
 		{ 
 			this.m_Value = value; 
+			this.name = string.Format("Card_{0}_{1}", ECardType.NUMBER, value);
 			// UI
 			if (this.m_ValueText != null)
 			{
@@ -62,12 +63,17 @@ public class CCard : MonoBehaviour,
 			// COLOR
 			if (this.m_BGImage != null)
 			{
-				var index = System.Array.IndexOf (CGameSetting.CARD_VALUES, value);
-				if (index > -1)
-				{
-					var color = CGameSetting.CARD_COLORS[index];
-					this.m_BGImage.color = color;
-				} 
+				var strPath = string.Format ("Images/Level{0}/card_{1}_background", CGameSetting.GAME_LEVEL.ToString("d2"), value);
+				var spriteBG = Resources.Load<Sprite>(strPath);
+				if (spriteBG != null)
+					this.m_BGImage.sprite = spriteBG;
+
+				// var index = System.Array.IndexOf (CGameSetting.CARD_VALUES, value);
+				// if (index > -1)
+				// {
+				// 	var color = CGameSetting.CARD_COLORS[index];
+				// 	this.m_BGImage.color = color;
+				// } 
 			}
 		}
 	}
@@ -268,8 +274,9 @@ public class CCard : MonoBehaviour,
 	{
 		if (this.m_ExplosionSystem.isPlaying)
 			return;
+		this.m_ExplosionSystem.gameObject.SetActive (true);
 		this.m_ExplosionSystem.Play();
-
+		// UI
 		this.m_BGImage.gameObject.SetActive (false);
 		this.m_DragObject.gameObject.SetActive (false);
 		this.m_ValueText.gameObject.SetActive (false);

@@ -20,6 +20,19 @@ public class CBoard : MonoBehaviour  {
 	}
 	[SerializeField]	protected bool m_CanUndo = true;
 
+	[Header("Menu")]
+	[SerializeField]	protected Text m_ScoreText;
+	protected int m_CurrentScore = 0;
+	public int currentScore 
+	{ 
+		get { return this.m_CurrentScore; }
+		set 
+		{ 
+			this.m_CurrentScore = value; 
+			this.m_ScoreText.text = string.Format(CGameSetting.UI_SCORE, CGameSetting.FormatNumber (value));
+		}
+	}
+
 	[Header("Columns")]
     [SerializeField]	protected CColumn[] m_Columns;
 
@@ -34,7 +47,6 @@ public class CBoard : MonoBehaviour  {
 
 
 	[Header("Save Load")]
-	public string SAVE_LOAD_NAME = "SAVE_GAME_0001";
 	[SerializeField]	protected CBoardData m_Data = new CBoardData();
 	public CBoardData data 
 	{ 
@@ -66,6 +78,9 @@ public class CBoard : MonoBehaviour  {
 
 	public virtual void Init()
 	{
+		// MENU
+		this.m_ScoreText = this.transform.Find("MenuPanel/ScoreText").GetComponent<Text>();
+		this.currentScore = CGameSetting.SCORE;
 		// COLUMNS
         this.m_Columns = this.GetComponentsInChildren<CColumn>();
 		for (int i = 0; i < this.m_Columns.Length; i++)
@@ -98,7 +113,7 @@ public class CBoard : MonoBehaviour  {
 		this.m_CanUndo = true;
 		// LOAD LAST SAVE
 		// this.DeleteSave();
-		if (this.HasSaveGame())
+		if (CGameSetting.HasSaveGame())
 		{
 			this.m_IsInited = false;
 			this.LoadBoard();
@@ -131,7 +146,7 @@ public class CBoard : MonoBehaviour  {
 
 	public virtual void ResetBoard()
 	{
-		this.DeleteSave();
+		CGameSetting.DeleteSave();
 		SceneManager.LoadScene(SceneManager.GetActiveScene().name);
 	}
 
@@ -149,7 +164,7 @@ public class CBoard : MonoBehaviour  {
 		if (result == false)
 		{
 			Debug.Log ("CHECK HAND " + result);
-			this.DeleteSave();
+			CGameSetting.DeleteSave();
 			this.ExplosionAllCards (() => {
 				Debug.Log ("COMPLETE MAP");
 				this.ResetBoard ();
@@ -186,6 +201,34 @@ public class CBoard : MonoBehaviour  {
 		} 
 	}
 
+	public virtual void AddScore(int score, int multi)
+	{
+		// Debug.Log (score + " * " + multi + " = " + (score * multi));
+		// UI
+		this.currentScore = CGameSetting.SCORE;
+		// ADD SCORE
+		var totalScore = score * multi;
+		CGameSetting.SCORE += totalScore;
+		// HANDLE
+		StopCoroutine (this.HandleAddScore());
+		StartCoroutine (this.HandleAddScore());
+	}
+
+	protected WaitForFixedUpdate m_WaitFixedUpdate = new WaitForFixedUpdate();
+	protected virtual IEnumerator HandleAddScore()
+	{
+		var currentTime = 0f;
+		for (int i = this.currentScore; i < CGameSetting.SCORE; i++)
+		{
+			yield return this.m_WaitFixedUpdate;
+			currentTime += Time.fixedDeltaTime;
+			this.currentScore += 1;
+			if (currentTime >= CGameSetting.UI_SCORE_TIMER)
+				break;
+		}
+		this.currentScore = CGameSetting.SCORE;
+	}
+
 	#endregion
 
 	#region Save && Load
@@ -218,7 +261,7 @@ public class CBoard : MonoBehaviour  {
 				{
 					this.m_CanUndo = true;
 				}
-			});
+			}, false);
 		}
 	}
 
@@ -237,8 +280,8 @@ public class CBoard : MonoBehaviour  {
 
 	public virtual void LoadBoard()
 	{
-		var saveGameStr = PlayerPrefs.GetString(this.SAVE_LOAD_NAME);
-		this.m_SaveList = JSON.Load(saveGameStr).Make<List<string>>();
+		var loadGameStr = CGameSetting.LoadGame();
+		this.m_SaveList = JSON.Load(loadGameStr).Make<List<string>>();
 		if (this.m_SaveList.Count > 0)
 		{
 			// GET NEXT SAVE
@@ -256,7 +299,7 @@ public class CBoard : MonoBehaviour  {
 					{
 						this.m_CanUndo = true;
 					}
-				});
+				}, false);
 			}
 		}
 		// INIT
@@ -269,6 +312,8 @@ public class CBoard : MonoBehaviour  {
 			return;
 		// INDEX
 		this.m_Data.saveIndex += 1;
+		// SCORE
+		this.m_Data.score = CGameSetting.SCORE;
 		// COLUMNS
 		var maxColumns = Mathf.Min(this.m_Columns.Length, this.m_Data.columns.GetLength(0));
 		for (int i = 0; i < this.m_Columns.Length; i++)
@@ -299,13 +344,16 @@ public class CBoard : MonoBehaviour  {
 	{
 		var listToStr = JSON.Dump(listStr);
 		// SAVE PREFABS
-		PlayerPrefs.SetString(this.SAVE_LOAD_NAME, listToStr);
-		PlayerPrefs.Save();
+		CGameSetting.SaveGame (listToStr);
 	}
 
 	public virtual void Load(string json)
 	{
+		// DATA
 		this.m_Data = JSON.Load(json).Make<CBoardData>();
+		// UI
+		CGameSetting.SCORE = this.m_Data.score;
+		this.currentScore = this.m_Data.score;
 		// Columns
 		var columnData = this.m_Data.columns;
 		for (int i = 0; i < this.m_Columns.Length; i++)
@@ -340,17 +388,6 @@ public class CBoard : MonoBehaviour  {
 		// Remove cards
 		var removeSize = this.m_Data.removeSize;
 		this.m_RemoveCard.SetSize (removeSize);
-	}
-
-	public virtual bool HasSaveGame()
-	{
-		return PlayerPrefs.HasKey(this.SAVE_LOAD_NAME);
-	}
-
-	public virtual void DeleteSave()
-	{
-		PlayerPrefs.DeleteKey(this.SAVE_LOAD_NAME);
-		PlayerPrefs.Save();
 	}
 
 	#endregion

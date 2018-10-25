@@ -5,6 +5,7 @@ using UnityEngine;
 public class CBoardData {
 
 	public int saveIndex = -1;
+	public int score = 0;
 	public int[,] columns;
 	public int[] onHands;
 	public int removeSize = 0;
@@ -12,6 +13,7 @@ public class CBoardData {
 	public CBoardData()
 	{
 		this.saveIndex = -1;
+		this.score = 0;
 		this.columns = new int[4, 8];
 		this.onHands = new int[2];
 		this.removeSize = 0;

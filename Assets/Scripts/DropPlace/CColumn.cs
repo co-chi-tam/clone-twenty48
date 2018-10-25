@@ -79,8 +79,7 @@ public class CColumn : MonoBehaviour,
 			this.m_Group.Set(this.m_Cards[i]);
 		}
 		this.m_Cards = new List<CCard>();
-		// ENABLE LAYOUT GROUP
-		// this.m_LayoutGroup.enabled = true;
+		// UI
 		this.m_FirstCard.gameObject.SetActive(true);
 	}
 
@@ -116,7 +115,6 @@ public class CColumn : MonoBehaviour,
 	public virtual void AddCardImmediate(CCard card)
 	{
 		// UI
-		// this.m_LayoutGroup.enabled = true;
 		this.m_FirstCard.gameObject.SetActive(false);
 		// POSITION
 		var lastCard = Camera.main.WorldToScreenPoint (this.GetLastCardPosition());
@@ -139,8 +137,7 @@ public class CColumn : MonoBehaviour,
 
 	public virtual void AddCardToList(float waitTime, float moveTime, CCard card, Vector3 to, Vector3 from)
 	{
-		// DISABLE LAYOUT GROUP
-		this.m_LayoutGroup.enabled = false;
+		// SETTING
 		card.transform.SetParent (this.m_RectTransform);
 		card.OnDropCard(Vector2.zero);
 		// MOVE
@@ -148,8 +145,6 @@ public class CColumn : MonoBehaviour,
 				to, from, 
 				moveTime, 
 				() => {
-					// ENABLE LAYOUT GROUP
-					// this.m_LayoutGroup.enabled = this.m_Cards.Count < this.m_MaximumCards;
 					this.m_FirstCard.gameObject.SetActive(false);
 					// CARD SETTING
 					card.transform.SetParent (this.transform);
@@ -162,7 +157,7 @@ public class CColumn : MonoBehaviour,
 					// CHECK
 					this.CheckCombineCards(() => {
 						this.Check2048Card();
-					});
+					}, true);
 					// UPDATE
 					card.OnHandDropCard();
 				});
@@ -170,7 +165,7 @@ public class CColumn : MonoBehaviour,
 		card.isDropped = true;
 	}
 
-	public virtual void CheckCombineCards(System.Action complete = null)
+	public virtual void CheckCombineCards(System.Action complete, bool checkScore = false)
 	{
 		// IF CARD GREATER 2
 		if (this.m_Cards.Count < 2) 
@@ -184,13 +179,11 @@ public class CColumn : MonoBehaviour,
 			}
 			return;
 		}
-		StartCoroutine (this.HandleCheckCombineCards(0.2f, complete));
+		StartCoroutine (this.HandleCheckCombineCards(0.2f, complete, checkScore));
 	}
 
-	public virtual IEnumerator HandleCheckCombineCards(float wait, System.Action complete)
+	public virtual IEnumerator HandleCheckCombineCards(float wait, System.Action complete, bool checkScore = false)
 	{
-		// DISABLE LAYOUT GROUP
-		this.m_LayoutGroup.enabled = false;
 		// WAIT
 		var counter = 0f;
 		while(counter < wait)
@@ -205,6 +198,7 @@ public class CColumn : MonoBehaviour,
 		Vector3 to = Vector3.zero;
 		Vector3 from = Vector3.zero;
 		var moving = false;
+		var multi = 0;
 		// CALCUALTE
 		while (x >= 0)
 		{
@@ -227,7 +221,8 @@ public class CColumn : MonoBehaviour,
 					yield return this.m_WaitFixedUpdate;
 				}
 				// 2. UPDATE VALUE
-				this.m_Cards[x].value = this.m_Cards[i].value + this.m_Cards[x].value;
+				var combineValue = this.m_Cards[i].value + this.m_Cards[x].value;
+				this.m_Cards[x].value = combineValue;
 				this.m_Cards[i].SetActive(false);
 				this.m_Group.Set(this.m_Cards[i]);
 				// 3. REMOVE DUPLICATE
@@ -236,17 +231,21 @@ public class CColumn : MonoBehaviour,
 				// 4. CONTINUE LOOP
 				i = this.m_Cards.Count - 1;
 				x = this.m_Cards.Count - 2;
+				// 5. CHECK SCORE
+				if (checkScore)
+				{
+					multi += 1;
+					this.m_Board.AddScore(combineValue, multi);
+				}
 			}
 			else
 			{
-				// 5. BREAK LOOP
+				// 6. BREAK LOOP
 				break;
 			}
 		}
 		// UNCHECK CALCULATE
 		this.m_OnAnimatingCard = false;
-		// ENABLE LAYOUT GROUP
-		// this.m_LayoutGroup.enabled = true;
 		// BOARD CHECK
 		this.m_Board.CheckHand();
 		// EVENTS
@@ -256,7 +255,7 @@ public class CColumn : MonoBehaviour,
 		}
 	}
 
-	public virtual void CheckCombineCardsNonAnim(System.Action complete = null)
+	public virtual void CheckCombineCardsNonAnim(System.Action complete = null, bool checkScore = false)
 	{
 		// IF CARD GREATER 2
 		if (this.m_Cards.Count < 2) 
@@ -275,6 +274,7 @@ public class CColumn : MonoBehaviour,
 		int x = this.m_Cards.Count - 2;
 		Vector3 to = Vector3.zero;
 		Vector3 from = Vector3.zero;
+		var multi = 0;
 		// CALCUALTE
 		while (x >= 0)
 		{
@@ -285,7 +285,8 @@ public class CColumn : MonoBehaviour,
 				to = this.m_Cards[i].transform.localPosition;
 				from = this.m_Cards[x].transform.localPosition;
 				// 2. UPDATE VALUE
-				this.m_Cards[x].value = this.m_Cards[i].value + this.m_Cards[x].value;
+				var combineValue = this.m_Cards[i].value + this.m_Cards[x].value;
+				this.m_Cards[x].value = combineValue;
 				this.m_Cards[i].SetActive(false);
 				this.m_Group.Set(this.m_Cards[i]);
 				// 3. REMOVE DUPLICATE
@@ -294,6 +295,12 @@ public class CColumn : MonoBehaviour,
 				// 4. CONTINUE LOOP
 				i = this.m_Cards.Count - 1;
 				x = this.m_Cards.Count - 2;
+				// 5. CHECK SCORE
+				if (checkScore)
+				{
+					multi += 1;
+					this.m_Board.AddScore(combineValue, multi);
+				}
 			}
 			else
 			{
@@ -303,8 +310,6 @@ public class CColumn : MonoBehaviour,
 		}
 		// UNCHECK CALCULATE
 		this.m_OnAnimatingCard = false;
-		// ENABLE LAYOUT GROUP
-		// this.m_LayoutGroup.enabled = true;
 		// BOARD CHECK
 		this.m_Board.CheckHand();
 		// EVENTS
@@ -323,6 +328,10 @@ public class CColumn : MonoBehaviour,
 				this.ExplosionAllCards(null);
 			}
 		}
+		// UI
+		this.m_FirstCard.gameObject.SetActive(true);
+		// SAVE BOARD 
+		// this.m_Board.SaveBoard();
 	}
 
 	public virtual void ExplosionAllCards(System.Action callback)

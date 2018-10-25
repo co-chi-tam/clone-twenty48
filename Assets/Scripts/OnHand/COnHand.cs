@@ -60,7 +60,7 @@ public class COnHand : MonoBehaviour {
 		// PREFABS
 		this.m_CardPrefab = Resources.Load<CCard> ("Card/Card");
 		// DRAW
-		this.OnDrawACard();
+		this.OnDrawCards();
 	}
 
 	public virtual void Clear()
@@ -76,7 +76,7 @@ public class COnHand : MonoBehaviour {
 		this.m_OnHandCards = new List<CCard>();
 	}
 
-	public virtual void OnDrawACard()
+	public virtual void OnDrawCards()
 	{
 		// DRAW CARDS
 		while (this.m_OnHandCards.Count < this.m_FirstCardDraw)
@@ -164,7 +164,7 @@ public class COnHand : MonoBehaviour {
 		// REMOVE ON HAND
 		this.m_OnHandCards.Remove (card);
 		// DRAW A NEW CARD
-		this.OnDrawACard();
+		this.OnDrawCards();
 	}
 
 	public virtual void ActiveFirstCard()
