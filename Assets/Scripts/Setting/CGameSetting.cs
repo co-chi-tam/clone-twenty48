@@ -1,8 +1,15 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class CGameSetting {
+
+	public static bool GAME_BUSY = false;
+
+	public static int CARD_PER_COLUMN = 8;
+
+	public static Vector2 CARD_SIZE = new Vector2(196f, 260f);
 	
 	public static int[] CARD_VALUES = new int[] {
 			2, 
@@ -32,5 +39,49 @@ public class CGameSetting {
 		new Color32(4,   147, 207, 255), 
 		new Color32(208, 233, 43,  255)  
 	};
+
+	#region ULTILITIES
+
+	public static Vector2 ConvertScreenToLocal(RectTransform parent, Vector3 position)
+	{
+		var localPosition = Vector2.zero;
+		RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            parent, 
+            position, 
+            Camera.main, 
+            out localPosition);
+		return localPosition;
+	}
+
+    #endregion
+
+	#region TIMER TO ADS
+
+	public static long DELAY_TO_AD = 60; 
+    public static string TIMER_TO_AD = "TIMER_TO_AD";
+
+	public static void InitTimerToAd()
+    {
+		if (PlayerPrefs.HasKey (TIMER_TO_AD) == false)
+		{
+			ResetTimerToAd();
+		}
+    }
+
+    public static bool IsTimerToAd(long delay)
+    {
+        var timeStr = PlayerPrefs.GetString(TIMER_TO_AD, DateTime.Now.Ticks.ToString());
+        var ticks = DateTime.Now.Ticks - long.Parse(timeStr);
+        var elapsedSpan = new TimeSpan(ticks);
+        return elapsedSpan.TotalSeconds >= delay;
+    }
+
+    public static void ResetTimerToAd()
+    {
+        PlayerPrefs.SetString(TIMER_TO_AD, DateTime.Now.Ticks.ToString());
+        PlayerPrefs.Save();
+    }
+
+    #endregion
 	
 }

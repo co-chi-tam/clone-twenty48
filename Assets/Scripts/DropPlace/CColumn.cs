@@ -12,23 +12,16 @@ public class CColumn : MonoBehaviour,
 	#region Implementation Fields
 
 	[Header("Configs")]
-	[SerializeField]	protected int m_MaximumCards = 8;
-	public int maximumCards 
-	{ 
-		get { return this.m_MaximumCards; }
-		set { this.m_MaximumCards = value; }
-	}
+	[SerializeField]	protected float m_HeighOffset = 50f;
+
 	[SerializeField]	protected List<CCard> m_Cards;
 	public List<CCard> cards 
 	{ 
 		get { return this.m_Cards; }
 		set { this.m_Cards = value; }
 	}
-	[SerializeField]	protected float m_HeighOffset = 50f;
-	
 	protected CGroupCard m_Group;
 	protected CBoard m_Board;
-	
 	protected VerticalLayoutGroup m_LayoutGroup;
 	protected Transform m_FirstCard;
 	protected Transform m_FirstCardPoint;
@@ -70,6 +63,10 @@ public class CColumn : MonoBehaviour,
 		this.m_FirstCardPoint = this.m_FirstCard.Find("FirstCardPoint");
 		// CARDS
 		this.m_Cards = new List<CCard>();
+		// CALCULATE HEIGH OFFSET
+		var heigh = this.m_RectTransform.sizeDelta.y - CGameSetting.CARD_SIZE.y;
+		var perItem = heigh / (CGameSetting.CARD_PER_COLUMN - 1);
+		this.m_HeighOffset = Mathf.Max(50f, Mathf.Round (perItem));
 	}
 
 	public virtual void Clear()
@@ -96,23 +93,23 @@ public class CColumn : MonoBehaviour,
 			return;
 		this.m_OnAnimatingCard = true;
 		// TO
-		var to = this.ConvertScreenToLocal (this.m_RectTransform, card.lastPosition);
+		var to = CGameSetting.ConvertScreenToLocal (this.m_RectTransform, card.lastPosition);
 		// FROM
 		var lastCard = Camera.main.WorldToScreenPoint (this.GetLastCardPosition());
-		var from = this.ConvertScreenToLocal (this.m_RectTransform, lastCard);
+		var from = CGameSetting.ConvertScreenToLocal (this.m_RectTransform, lastCard);
 		// UPDATE
 		if (this.m_Cards.Count == 0)
 		{
-			this.AddCardToList (0.2f, 0.2f, card, to, from);
+			this.AddCardToList (0.1f, 0.3f, card, to, from);
 		}
-		else if (this.m_Cards.Count > 0 && this.m_Cards.Count < this.m_MaximumCards)
+		else if (this.m_Cards.Count > 0 && this.m_Cards.Count < CGameSetting.CARD_PER_COLUMN)
 		{
 			from.y -= this.m_HeighOffset;
-			this.AddCardToList (0.2f, 0.2f, card, to, from);
+			this.AddCardToList (0.1f, 0.3f, card, to, from);
 		}
 		else
 		{
-			this.AddCardToList (0.1f, 0.1f, card, from, from);
+			this.AddCardToList (0.1f, 0.3f, card, from, from);
 		}
 	}
 
@@ -123,8 +120,8 @@ public class CColumn : MonoBehaviour,
 		this.m_FirstCard.gameObject.SetActive(false);
 		// POSITION
 		var lastCard = Camera.main.WorldToScreenPoint (this.GetLastCardPosition());
-		var locaPosition = this.ConvertScreenToLocal (this.m_RectTransform, lastCard);
-		if (this.m_Cards.Count > 0 && this.m_Cards.Count < this.m_MaximumCards)
+		var locaPosition = CGameSetting.ConvertScreenToLocal (this.m_RectTransform, lastCard);
+		if (this.m_Cards.Count > 0 && this.m_Cards.Count < CGameSetting.CARD_PER_COLUMN)
 		{
 			locaPosition.y -= this.m_HeighOffset;
 		}
@@ -353,24 +350,13 @@ public class CColumn : MonoBehaviour,
 		}
 	}
 
-	public virtual Vector2 ConvertScreenToLocal(RectTransform parent, Vector3 position)
-	{
-		var localPosition = Vector2.zero;
-		RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            parent, 
-            position, 
-            Camera.main, 
-            out localPosition);
-		return localPosition;
-	}
-
 	public virtual bool IsAvailable(CCard card)
 	{
 		if (card == null)
 			return true;
-		if (this.m_Cards.Count < this.m_MaximumCards)
+		if (this.m_Cards.Count < CGameSetting.CARD_PER_COLUMN)
 			return true;
-		if (this.m_Cards.Count >= this.m_MaximumCards)
+		if (this.m_Cards.Count >= CGameSetting.CARD_PER_COLUMN)
 			return this.m_Cards[this.m_Cards.Count - 1].value == card.value;
 		return true;
 	}

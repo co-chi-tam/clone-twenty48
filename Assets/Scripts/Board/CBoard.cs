@@ -49,6 +49,7 @@ public class CBoard : MonoBehaviour  {
 	}
 
 	protected bool m_IsExplosing = false;
+	protected CAdsSimple m_AdsSimple;
 
 	#endregion
 
@@ -82,7 +83,7 @@ public class CBoard : MonoBehaviour  {
 		this.m_UndoButton = this.transform.Find("OnHandPanel/UtilityPanel/UndoButton").GetComponent<Button>();
 		this.m_UndoButton.onClick.RemoveAllListeners();
 		this.m_UndoButton.onClick.AddListener(() => {
-			this.UndoBoard();
+			this.UndoBoardWithAbs ();
 		});
 		this.m_ExitButton = this.transform.Find("MenuPanel/ExitButton").GetComponent<Button>();
 		this.m_ExitButton.onClick.RemoveAllListeners();
@@ -107,6 +108,8 @@ public class CBoard : MonoBehaviour  {
 			this.m_IsInited = true;
 			this.SaveBoard();
 		}
+		// ADS
+		this.m_AdsSimple = GameObject.FindObjectOfType<CAdsSimple>();
     }
 
 	public virtual void Clear()
@@ -217,6 +220,19 @@ public class CBoard : MonoBehaviour  {
 				}
 			});
 		}
+	}
+
+	public virtual void UndoBoardWithAbs()
+	{
+		if (this.m_AdsSimple == null)
+			return;
+		if (this.m_AdsSimple.canShowAds == false)
+			return;
+		this.m_AdsSimple.OnFinish.RemoveAllListeners();
+		this.m_AdsSimple.OnFinish.AddListener(() => {
+			this.UndoBoard();
+		});
+		this.m_AdsSimple.Show();	
 	}
 
 	public virtual void LoadBoard()

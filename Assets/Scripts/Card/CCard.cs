@@ -20,7 +20,8 @@ public class CCard : MonoBehaviour,
 		NONE = 0,
 		DROPPED = 1,
 		COMBINE = 2,
-		APPEAR = 3
+		APPEAR = 3,
+		DISAPPEAR = 4
 	}
 
 	#region Fields
@@ -69,13 +70,6 @@ public class CCard : MonoBehaviour,
 				} 
 			}
 		}
-	}
-
-	[SerializeField]	protected Vector2 m_Size = new Vector2(196f, 260f);
-	public Vector2 size 
-	{ 
-		get { return this.m_Size; }
-		set { this.m_Size = value; }
 	}
 
 	[SerializeField]	protected Image m_BGImage;
@@ -195,6 +189,8 @@ public class CCard : MonoBehaviour,
 		// HIGHLIGHT
 		this.m_HighlightImage = this.transform.Find("HighlightImage");
 		this.m_HighlightImage.gameObject.SetActive(false);
+		// SET SIZE
+		this.m_RectTransform.sizeDelta = CGameSetting.CARD_SIZE;
 	}
 
 	public virtual void Clear()
@@ -221,11 +217,6 @@ public class CCard : MonoBehaviour,
 		this.m_CardType = type;
 		// ONHAND
 		this.m_OnHand = onHand;
-	}
-
-	public virtual void ResetSize()
-	{
-		this.m_RectTransform.sizeDelta = this.m_Size;
 	}
 
 	public virtual void Move(float wait, Vector3 to, Vector2 from, float time, System.Action complete)
@@ -291,6 +282,9 @@ public class CCard : MonoBehaviour,
 
 	public virtual void OnBeginDragCard(Vector2 position)
 	{
+		// BUSY
+		if (CGameSetting.GAME_BUSY)
+			return;
 		// ACTIVE
 		if (this.m_ActiveCard == false)
 			return;
@@ -305,6 +299,7 @@ public class CCard : MonoBehaviour,
 			return;
 		this.m_Group.selectCard = this;
 		originalPanelLocalPosition = dragObjectInternal.localPosition;
+		// originalPanelLocalPosition.y = originalPanelLocalPosition.y + (CGameSetting.CARD_SIZE.y / 5f);
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             dragAreaInternal, 
             position, 
@@ -314,6 +309,9 @@ public class CCard : MonoBehaviour,
 
 	public virtual void OnDragCard(Vector2 position)
 	{
+		// BUSY
+		if (CGameSetting.GAME_BUSY)
+			return;
 		// ACTIVE
 		if (this.m_ActiveCard == false)
 			return;
@@ -341,6 +339,9 @@ public class CCard : MonoBehaviour,
 
 	public virtual void OnDropCard(Vector2 position)
 	{
+		// BUSY
+		if (CGameSetting.GAME_BUSY)
+			return;
 		// ACTIVE
 		if (this.m_ActiveCard == false)
 			return;
@@ -376,6 +377,9 @@ public class CCard : MonoBehaviour,
 			break;
 			case EAnimation.COMBINE:
 				this.m_Animator.SetTrigger("IsCombine");
+			break;
+			case EAnimation.DISAPPEAR:
+				this.m_Animator.SetTrigger("IsDisappear");
 			break;
 		}
 	}
