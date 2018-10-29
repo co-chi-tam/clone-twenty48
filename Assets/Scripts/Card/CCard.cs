@@ -10,6 +10,7 @@ public class CCard : MonoBehaviour,
 
 	public enum ECardType: int 
 	{
+		NONE = -1,
 		NUMBER = 0,
 		BOMB = 1,
 		SPECIAL = 2
@@ -38,7 +39,29 @@ public class CCard : MonoBehaviour,
 	public ECardType cardType 
 	{ 
 		get { return this.m_CardType; }
-		set { this.m_CardType = value; }
+		set 
+		{ 
+			this.m_CardType = value; 
+			// BOMB
+			if (this.m_BombImage != null)
+				this.m_BombImage.SetActive(false);
+			// UPDATE
+			switch (value)
+			{
+				default:
+				case ECardType.NUMBER:
+					// TODO
+				break;
+				case ECardType.SPECIAL:
+					// TODO
+				break;
+				case ECardType.BOMB: 
+					// BOMB
+					if (this.m_BombImage != null)
+						this.m_BombImage.SetActive(true);
+				break;
+			}
+		}
 	}
 	[Header("Configs")]
 	[SerializeField]	protected bool m_IsDropped = false;
@@ -94,9 +117,10 @@ public class CCard : MonoBehaviour,
 		set { this.m_ExplosionSystem = value; }
 	}
 
+	protected GameObject m_BombImage;
+
 	public Vector3 lastPosition;
 
-	protected Vector3 m_FirstStartPosition;
     private Vector2 originalLocalPointerPosition;
     private Vector3 originalPanelLocalPosition;
 	private RectTransform dragObjectInternal
@@ -179,11 +203,12 @@ public class CCard : MonoBehaviour,
 		// UI
 		this.m_RectTransform = this.transform as RectTransform;
 		this.m_BGImage = this.transform.Find("BGImage").GetComponent<Image>();
-		this.m_FirstStartPosition = this.m_BGImage.transform.localPosition;
-		this.lastPosition = this.m_FirstStartPosition;
+		this.lastPosition = this.m_BGImage.transform.localPosition;
 		this.m_DragObject = this.m_BGImage.GetComponent<RectTransform>();
 		// VALUE
 		this.m_ValueText = this.transform.Find("BGImage/ValueText").GetComponent<Text>();
+		// BOMB
+		this.m_BombImage = this.transform.Find("BGImage/BombImage").gameObject;
 		// GROUP
 		this.m_Group = GameObject.FindObjectOfType<CGroupCard>();
 		// DROP
@@ -191,6 +216,7 @@ public class CCard : MonoBehaviour,
 		// ANIM
 		this.m_IsMoving = false;
 		this.m_Animator = this.GetComponent<Animator>();
+		this.m_Animator.enabled = true;
 		this.m_ExplosionSystem = this.transform.Find("Explosion").GetComponent<ParticleSystem>();
 		// HIGHLIGHT
 		this.m_HighlightImage = this.transform.Find("HighlightImage");
@@ -202,6 +228,7 @@ public class CCard : MonoBehaviour,
 	public virtual void Clear()
 	{
 		// UI
+		this.m_Animator.enabled = true;
 		this.m_BGImage.gameObject.SetActive (true);
 		this.m_DragObject.gameObject.SetActive (true);
 		this.m_ValueText.gameObject.SetActive (true);
@@ -214,21 +241,23 @@ public class CCard : MonoBehaviour,
 
 	public virtual void Setup(int value, ECardType type, COnHand onHand)
 	{
-		this.name = string.Format("Card_{0}_{1}", type.ToString(), value);
 		// UI
 		this.m_ValueText.text = value.ToString();
 		// VALUE
 		this.value = value;
 		// TYPE
-		this.m_CardType = type;
+		this.cardType = type;
 		// ONHAND
 		this.m_OnHand = onHand;
+		// NAME
+		this.name = string.Format("Card_{0}_{1}", this.m_CardType.ToString(), this.m_Value);
 	}
 
 	public virtual void Move(float wait, Vector3 to, Vector2 from, float time, System.Action complete)
 	{
 		if (this.m_IsMoving)
 			return;
+		dragObjectInternal.localPosition = Vector3.zero;
 		StartCoroutine (this.HandleMoveTo(wait, to, from, time, complete));
 	}
 
@@ -247,9 +276,9 @@ public class CCard : MonoBehaviour,
 		}
 		counter = 0f;
 		// UPDATE PER FIXED TIMER
-		while (counter < time)
+		while (counter <= time)
 		{
-			yield return this.m_WaitFixedUpdate;
+		 	yield return this.m_WaitFixedUpdate;
 			var delta = counter / time;
 			this.transform.localPosition = Vector3.Lerp (to, from, delta);
 			counter += Time.fixedDeltaTime;
@@ -277,6 +306,7 @@ public class CCard : MonoBehaviour,
 		this.m_ExplosionSystem.gameObject.SetActive (true);
 		this.m_ExplosionSystem.Play();
 		// UI
+		this.m_Animator.enabled = false;
 		this.m_BGImage.gameObject.SetActive (false);
 		this.m_DragObject.gameObject.SetActive (false);
 		this.m_ValueText.gameObject.SetActive (false);
@@ -298,15 +328,14 @@ public class CCard : MonoBehaviour,
 		// GROUP
 		if (this.m_Group == null)
 			return;
-		// UI
-		if (this.m_BGImage == null)
+		// MOVING
+		if (this.m_IsMoving)
 			return;
 		// IS DROPPED
 		if (this.m_IsDropped)
 			return;
 		this.m_Group.selectCard = this;
 		originalPanelLocalPosition = dragObjectInternal.localPosition;
-		// originalPanelLocalPosition.y = originalPanelLocalPosition.y + (CGameSetting.CARD_SIZE.y / 5f);
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             dragAreaInternal, 
             position, 
@@ -323,15 +352,13 @@ public class CCard : MonoBehaviour,
 		if (this.m_ActiveCard == false)
 			return;
 		// GROUP
-		if (this.m_Group == null)
+		if (this.m_Group == null || this.m_Group.selectCard != this)
 			return;
-		if (this.m_Group.selectCard != this)
+		// MOVING
+		if (this.m_IsMoving)
 			return;
 		// IS DROPPED
 		if (this.m_IsDropped)
-			return;
-		// UI
-		if (this.m_BGImage == null)
 			return;
 		Vector2 localPointerPosition;
 		if (RectTransformUtility.ScreenPointToLocalPointInRectangle(dragAreaInternal, Input.mousePosition, Camera.main, out localPointerPosition))
@@ -355,14 +382,14 @@ public class CCard : MonoBehaviour,
 		// GROUP
 		if (this.m_Group == null)
 			return;
-		// UI
-		if (this.m_BGImage == null)
+		// MOVING
+		if (this.m_IsMoving)
 			return;
 		// IS DROPPED
 		if (this.m_IsDropped)
 			return;
 		this.m_Group.selectCard = null;
-		dragObjectInternal.localPosition = this.m_FirstStartPosition;
+		dragObjectInternal.localPosition = Vector3.zero;
 	}
 
 	#endregion
@@ -401,6 +428,36 @@ public class CCard : MonoBehaviour,
 	public virtual void SetActive(bool value)
 	{
 		this.gameObject.SetActive (value);
+	}
+
+	public virtual string GetCardString()
+	{
+		return this.GetCardString (this.m_Value, (int) this.m_CardType);
+	}
+
+	public virtual string GetCardString(object value, object type)
+	{
+		return string.Format("{0}_{1}", value, type);
+	}
+
+	#endregion
+
+	#region ULTILITES
+
+	public static string DefaultCard()
+	{
+		return string.Format("{0}_{1}", -1, (int) ECardType.NONE);
+	}
+
+	public static bool ParseCard(string parseValue, out int value, out ECardType type)
+	{
+		value = -1;
+		type = ECardType.NONE;
+		var splits = parseValue.Split('_');
+		// Debug.Log (splits[0].ToString() + " / " + splits[1].ToString());
+		value = int.Parse(splits[0].ToString());
+		type = (ECardType) int.Parse (splits[1].ToString());
+		return value >= 0 && type != ECardType.NONE;
 	}
 
 	#endregion

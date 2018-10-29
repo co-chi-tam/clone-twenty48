@@ -50,6 +50,7 @@ public class COnHand : MonoBehaviour {
 		// UI
 		this.m_CardContainer = this.transform.Find("CardContain");
 		this.m_LayoutGroup = this.m_CardContainer.GetComponent<LayoutGroup>();
+		this.m_LayoutGroup.enabled = true;
 		this.m_FirstCard = this.m_CardContainer.Find("FirstCard");
 		// CARDS
 		this.m_OnHandCards = new List<CCard>();
@@ -73,7 +74,8 @@ public class COnHand : MonoBehaviour {
 			this.m_OnHandCards[i].isDropped = false;
 			this.m_Group.Set(this.m_OnHandCards[i]);
 		}
-		this.m_OnHandCards = new List<CCard>();
+		this.m_OnHandCards.Clear();
+		this.m_OnHandCards.TrimExcess();
 	}
 
 	public virtual void OnDrawCards()
@@ -83,15 +85,29 @@ public class COnHand : MonoBehaviour {
 		{
 			var random = Random.Range(0, 6);
 			var value = CGameSetting.CARD_VALUES[random];
-			var type = CCard.ECardType.NUMBER;
+			var type = COnHand.RandomCardType(); // CCard.ECardType.NUMBER;
 			var card = this.DrawCard (value, type);
 			this.OnHandACard(card);
 			card.SetActive (true);
 		}
 		// FIRST ACTIVE CARD
 		this.ActiveFirstCard();
-		// SAVE
-		this.m_Board.SaveBoard();
+	}
+
+	public virtual void OnReDrawCards()
+	{
+		// CLEAR
+		for (int i = 0; i < this.m_OnHandCards.Count; i++)
+		{
+			this.m_OnHandCards[i].SetActive(false);
+			this.m_OnHandCards[i].activeCard = false;
+			this.m_OnHandCards[i].isDropped = false;
+			this.m_Group.Set(this.m_OnHandCards[i]);
+		}
+		this.m_OnHandCards.Clear();
+		this.m_OnHandCards.TrimExcess();
+		// DRAW CARDS
+		this.OnDrawCards();
 	}
 
 	public virtual CCard DrawCard(int value, CCard.ECardType type)
@@ -206,6 +222,26 @@ public class COnHand : MonoBehaviour {
 		return this.m_OnHandCards [this.m_OnHandCards.Count - 1];
 	}
 
+	#endregion
+
+	#region Getter && Setter
+
+	public static CCard.ECardType RandomCardType()
+	{
+		var random = Random.Range (0, 100);
+		// 95 => NUMBER
+		// 5 => BOMB
+		if (random <= 95)
+		{
+			return CCard.ECardType.NUMBER;
+		}
+		else
+		{
+			return CCard.ECardType.BOMB;
+		}
+		// return CCard.ECardType.NUMBER;
+	}
+	
 	#endregion
 
 }

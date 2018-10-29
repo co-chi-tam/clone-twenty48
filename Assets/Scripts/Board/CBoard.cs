@@ -41,9 +41,8 @@ public class CBoard : MonoBehaviour  {
 
 	[Header("Buttons")]
 	[SerializeField]	protected CRemoveCard m_RemoveCard;
-	// [SerializeField]	protected Button m_RedrawButton;
+	[SerializeField]	protected Button m_GiftButton;
 	[SerializeField]	protected Button m_UndoButton;
-	[SerializeField]	protected Button m_ExitButton;
 
 
 	[Header("Save Load")]
@@ -61,6 +60,8 @@ public class CBoard : MonoBehaviour  {
 	}
 
 	protected bool m_IsExplosing = false;
+
+	protected CMenu m_Menu;
 	protected CAdsSimple m_AdsSimple;
 
 	#endregion
@@ -69,8 +70,26 @@ public class CBoard : MonoBehaviour  {
 
     protected virtual void Start()
 	{
-		this.Init();
+		
 	}
+
+#if UNITY_DEBUG_MODE
+
+	protected virtual void OnGUI()
+	{
+		if (this.m_Columns == null)
+			return;
+		for (int i = 0; i < this.m_Columns.Length; i++)
+		{
+			var column = this.m_Columns[i];
+			GUI.Label (new Rect(0f, i * 50f, 200f, 50f), 
+				string.Format("C{0}-ho: {1}- h: {2}- w: {3}", 
+					i + 1, column.heighOffset, column.heighTransform, column.widthTransform), 
+					new GUIStyle() { fontSize = 44, fontStyle = FontStyle.Bold });
+		}
+	}
+
+#endif
 
 	#endregion
 
@@ -79,6 +98,8 @@ public class CBoard : MonoBehaviour  {
 	public virtual void Init()
 	{
 		// MENU
+		this.m_Menu = GameObject.FindObjectOfType<CMenu>();
+		this.m_Menu.Init();
 		this.m_ScoreText = this.transform.Find("MenuPanel/ScoreText").GetComponent<Text>();
 		this.currentScore = CGameSetting.SCORE;
 		// COLUMNS
@@ -94,17 +115,25 @@ public class CBoard : MonoBehaviour  {
 		this.m_RemoveCard = this.GetComponentInChildren<CRemoveCard>();
 		this.m_RemoveCard.Init();
 		// UTILITIES
-		// this.m_RedrawButton = this.transform.Find("OnHandPanel/UtilityPanel/RedrawButton").GetComponent<Button>();
+		this.m_GiftButton = this.transform.Find("OnHandPanel/UtilityPanel/GiftButton").GetComponent<Button>();
+		this.m_GiftButton.onClick.RemoveAllListeners();
+		this.m_GiftButton.onClick.AddListener(() => {
+#if UNITY_DEBUG_MODE
+			this.RedrawOnHand();
+#else
+			this.RedrawWithAbs();
+#endif
+		});
 		this.m_UndoButton = this.transform.Find("OnHandPanel/UtilityPanel/UndoButton").GetComponent<Button>();
 		this.m_UndoButton.onClick.RemoveAllListeners();
 		this.m_UndoButton.onClick.AddListener(() => {
+#if UNITY_DEBUG_MODE
+			this.UndoBoard();
+#else
 			this.UndoBoardWithAbs ();
+#endif
 		});
-		this.m_ExitButton = this.transform.Find("MenuPanel/ExitButton").GetComponent<Button>();
-		this.m_ExitButton.onClick.RemoveAllListeners();
-		this.m_ExitButton.onClick.AddListener(() => {
-			this.ResetBoard ();
-		});
+		
 		// EXPLOSION
 		this.m_IsExplosing = false;
 		// INDEX
@@ -229,6 +258,25 @@ public class CBoard : MonoBehaviour  {
 		this.currentScore = CGameSetting.SCORE;
 	}
 
+	public virtual void RedrawOnHand()
+	{
+		this.m_OnHand.OnReDrawCards();
+		this.SaveBoard();
+	}
+
+	public virtual void RedrawWithAbs()
+	{
+		if (this.m_AdsSimple == null)
+			return;
+		if (this.m_AdsSimple.canShowAds == false)
+			return;
+		this.m_AdsSimple.OnFinish.RemoveAllListeners();
+		this.m_AdsSimple.OnFinish.AddListener(() => {
+			this.RedrawOnHand();
+		});
+		this.m_AdsSimple.Show();	
+	}
+
 	#endregion
 
 	#region Save && Load
@@ -293,7 +341,7 @@ public class CBoard : MonoBehaviour  {
 			var countColumn = 0;
 			for (int i = 0; i < this.m_Columns.Length; i++)
 			{
-				this.m_Columns[i].CheckCombineCardsNonAnim(() => {
+				this.m_Columns[i].CheckCombineCards(() => {
 					countColumn++;
 					if (countColumn >= this.m_Columns.Length)
 					{
@@ -322,16 +370,16 @@ public class CBoard : MonoBehaviour  {
 			for (int x = 0; x < this.m_Data.columns.GetLength(1); x++)
 			{
 				if (x < cards.Count)
-					this.m_Data.columns[i, x] = cards[x].value;
+					this.m_Data.columns[i, x] = cards[x].GetCardString();
 				else
-					this.m_Data.columns[i, x] = 0;
+					this.m_Data.columns[i, x] = CCard.DefaultCard();
 			}
 		}
 		// ON HAND
 		var onHandCards = this.m_OnHand.onHandCard;
 		for (int i = 0; i < onHandCards.Count; i++)
 		{
-			this.m_Data.onHands[i] = onHandCards[i].value;
+			this.m_Data.onHands[i] = onHandCards[i].GetCardString();
 		}
 		// SAVE DATA
 		var saveToStr = JSON.Dump(this.m_Data);
@@ -362,10 +410,12 @@ public class CBoard : MonoBehaviour  {
 			column.Clear();
 			for (int x = 0; x < columnData.GetLength(1); x++)
 			{
-				var cardValue = columnData[i, x];
-				if (cardValue > 1)
+				var parseValue = columnData[i, x];
+				var cardValue = -1;
+				var cardType = CCard.ECardType.NONE;
+				if (CCard.ParseCard (parseValue, out cardValue, out cardType))
 				{
-					var card = this.m_OnHand.DrawCard (cardValue, CCard.ECardType.NUMBER);
+					var card = this.m_OnHand.DrawCard (cardValue, cardType);
 					column.AddCardImmediate (card);
 				}
 			}
@@ -375,10 +425,12 @@ public class CBoard : MonoBehaviour  {
 		this.m_OnHand.Clear();
 		for (int i = 0; i < onHandDatas.Length; i++)
 		{
-			var cardValue = onHandDatas[i];
-			if (cardValue > 1)
+			var parseValue = onHandDatas[i];
+			var cardValue = -1;
+			var cardType = CCard.ECardType.NONE;
+			if (CCard.ParseCard (parseValue, out cardValue, out cardType))
 			{
-				var card = this.m_OnHand.DrawCard (cardValue, CCard.ECardType.NUMBER);
+				var card = this.m_OnHand.DrawCard (cardValue, cardType);
 				card.Clear();
 				this.m_OnHand.OnHandACardImmediate(card);
 			}

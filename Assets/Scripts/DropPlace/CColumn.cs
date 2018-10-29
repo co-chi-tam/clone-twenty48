@@ -13,6 +13,10 @@ public class CColumn : MonoBehaviour,
 
 	[Header("Configs")]
 	[SerializeField]	protected float m_HeighOffset = 50f;
+	public float heighOffset 
+	{ 
+		get { return this.m_HeighOffset; }	
+	}
 
 	[SerializeField]	protected List<CCard> m_Cards;
 	public List<CCard> cards 
@@ -33,6 +37,24 @@ public class CColumn : MonoBehaviour,
 	}
 	protected WaitForFixedUpdate m_WaitFixedUpdate = new WaitForFixedUpdate();
     protected RectTransform m_RectTransform = null;
+	public float widthTransform 
+	{ 
+		get 
+		{ 
+			if (this.m_RectTransform != null)
+				return this.m_RectTransform.sizeDelta.x;
+			return -1f; 
+		}	
+	}
+	public float heighTransform 
+	{ 
+		get 
+		{ 
+			if (this.m_RectTransform != null)
+				return this.m_RectTransform.sizeDelta.y;
+			return -1f; 
+		}	
+	}
 	protected bool m_IsExplosing = false;
 	
 	#endregion
@@ -40,6 +62,11 @@ public class CColumn : MonoBehaviour,
 	#region Implementation Monobehaviour
 
 	protected virtual void Start()
+	{
+		
+	}
+
+	protected virtual void OnGUI()
 	{
 		
 	}
@@ -52,6 +79,10 @@ public class CColumn : MonoBehaviour,
 	{
 		// UI
 		this.m_RectTransform = this.transform as RectTransform;
+		// CALCULATE HEIGH OFFSET
+		var heigh = this.m_RectTransform.sizeDelta.y - CGameSetting.CARD_SIZE.y;
+		var perItem = heigh / (CGameSetting.CARD_PER_COLUMN - 1);
+		this.m_HeighOffset = Mathf.Max(50f, Mathf.Round (perItem));
 		// GROUP
 		this.m_Group = GameObject.FindObjectOfType<CGroupCard>();
 		this.m_LayoutGroup = this.GetComponent<VerticalLayoutGroup>();
@@ -63,10 +94,6 @@ public class CColumn : MonoBehaviour,
 		this.m_FirstCardPoint = this.m_FirstCard.Find("FirstCardPoint");
 		// CARDS
 		this.m_Cards = new List<CCard>();
-		// CALCULATE HEIGH OFFSET
-		var heigh = this.m_RectTransform.sizeDelta.y - CGameSetting.CARD_SIZE.y;
-		var perItem = heigh / (CGameSetting.CARD_PER_COLUMN - 1);
-		this.m_HeighOffset = Mathf.Max(50f, Mathf.Round (perItem));
 	}
 
 	public virtual void Clear()
@@ -86,6 +113,9 @@ public class CColumn : MonoBehaviour,
 	public virtual void AddCard(CCard card)
 	{
 		if (this.IsAvailable (card) == false)
+			return;
+		// EXPLOSION
+		if (this.m_IsExplosing)
 			return;
 		// ANIMATING CARDS
 		if (this.m_OnAnimatingCard)
@@ -139,7 +169,7 @@ public class CColumn : MonoBehaviour,
 	{
 		// SETTING
 		card.transform.SetParent (this.m_RectTransform);
-		card.OnDropCard(Vector2.zero);
+		card.isDropped = true;
 		// MOVE
 		card.Move(waitTime, 
 				to, from, 
@@ -154,15 +184,27 @@ public class CColumn : MonoBehaviour,
 					card.transform.localScale = Vector3.one;
 					// ADD
 					this.m_Cards.Add (card);
-					// CHECK
-					this.CheckCombineCards(() => {
+					if (this.m_Cards.Count > 1)
+					{
+						// CHECK
+						this.CheckCombineCards(() => {
+							this.Check2048Card();
+							// SAVE
+							this.m_Board.SaveBoard();
+						}, true);
+					}
+					else
+					{
+						// UNCHECK CALCULATE
+						this.m_OnAnimatingCard = false;
+						// 2048
 						this.Check2048Card();
-					}, true);
+						// SAVE
+						this.m_Board.SaveBoard();
+					}
 					// UPDATE
 					card.OnHandDropCard();
 				});
-		// DROPPRED
-		card.isDropped = true;
 	}
 
 	public virtual void CheckCombineCards(System.Action complete, bool checkScore = false)
@@ -192,9 +234,9 @@ public class CColumn : MonoBehaviour,
 			yield return this.m_WaitFixedUpdate;
 			counter += Time.deltaTime;
 		}
-		// SET VALUE
 		int i = this.m_Cards.Count - 1;
 		int x = this.m_Cards.Count - 2;
+		// SET VALUE
 		Vector3 to = Vector3.zero;
 		Vector3 from = Vector3.zero;
 		var moving = false;
@@ -204,108 +246,74 @@ public class CColumn : MonoBehaviour,
 		{
 			// WAIT
 			yield return this.m_WaitFixedUpdate;
-			// 1. IF SAME VALUE
-			if (this.m_Cards[i].value == this.m_Cards[x].value)
+			// NUMBER && NUMBER
+			if (this.m_Cards[i].cardType == CCard.ECardType.NUMBER 
+				&& this.m_Cards[x].cardType == CCard.ECardType.NUMBER)
 			{
-				// CALCUALTE
-				to = this.m_Cards[i].transform.localPosition;
-				from = this.m_Cards[x].transform.localPosition;
-				moving = false;
-				this.m_Cards[i].Move(0.1f, to, from, 0.2f, () => {
-					moving = true;
-				});
-				this.m_Cards[x].SetAnimation(CCard.EAnimation.COMBINE);
-				while(moving == false)
+				// 1. IF SAME VALUE CARD NUMBER
+				if (this.m_Cards[i].value == this.m_Cards[x].value)
 				{
-					// WAIT
-					yield return this.m_WaitFixedUpdate;
+					// CALCUALTE
+					to = this.m_Cards[i].transform.localPosition;
+					from = this.m_Cards[x].transform.localPosition;
+					moving = false;
+					this.m_Cards[i].Move(0.1f, to, from, 0.2f, () => {
+						moving = true;
+					});
+					this.m_Cards[x].SetAnimation(CCard.EAnimation.COMBINE);
+					while(moving == false)
+					{
+						// WAIT
+						yield return this.m_WaitFixedUpdate;
+					}
+					// 2. UPDATE VALUE
+					var combineValue = this.m_Cards[i].value + this.m_Cards[x].value;
+					this.m_Cards[x].value = combineValue;
+					this.m_Cards[i].SetActive(false);
+					this.m_Group.Set(this.m_Cards[i]);
+					// 3. REMOVE DUPLICATE
+					this.m_Cards.Remove (this.m_Cards[i]);
+					this.m_Cards.TrimExcess();
+					// 4. CONTINUE LOOP
+					i = this.m_Cards.Count - 1;
+					x = this.m_Cards.Count - 2;
+					// 5. CHECK SCORE
+					if (checkScore)
+					{
+						multi += 1;
+						this.m_Board.AddScore(combineValue, multi);
+					}
 				}
-				// 2. UPDATE VALUE
-				var combineValue = this.m_Cards[i].value + this.m_Cards[x].value;
-				this.m_Cards[x].value = combineValue;
-				this.m_Cards[i].SetActive(false);
-				this.m_Group.Set(this.m_Cards[i]);
-				// 3. REMOVE DUPLICATE
-				this.m_Cards.Remove (this.m_Cards[i]);
-				this.m_Cards.TrimExcess();
-				// 4. CONTINUE LOOP
-				i = this.m_Cards.Count - 1;
-				x = this.m_Cards.Count - 2;
-				// 5. CHECK SCORE
-				if (checkScore)
+				else
 				{
-					multi += 1;
-					this.m_Board.AddScore(combineValue, multi);
-				}
-			}
-			else
-			{
-				// 6. BREAK LOOP
-				break;
-			}
-		}
-		// UNCHECK CALCULATE
-		this.m_OnAnimatingCard = false;
-		// BOARD CHECK
-		this.m_Board.CheckHand();
-		// EVENTS
-		if (complete != null)
-		{
-			complete();
-		}
-	}
-
-	public virtual void CheckCombineCardsNonAnim(System.Action complete = null, bool checkScore = false)
-	{
-		// IF CARD GREATER 2
-		if (this.m_Cards.Count < 2) 
-		{
-			// UNCHECK CALCULATE
-			this.m_OnAnimatingCard = false;
-			// EVENTS
-			if (complete != null)
-			{
-				complete();
-			}
-			return;
-		}
-		// SET VALUE
-		int i = this.m_Cards.Count - 1;
-		int x = this.m_Cards.Count - 2;
-		Vector3 to = Vector3.zero;
-		Vector3 from = Vector3.zero;
-		var multi = 0;
-		// CALCUALTE
-		while (x >= 0)
-		{
-			// 1. IF SAME VALUE
-			if (this.m_Cards[i].value == this.m_Cards[x].value)
-			{
-				// CALCUALTE
-				to = this.m_Cards[i].transform.localPosition;
-				from = this.m_Cards[x].transform.localPosition;
-				// 2. UPDATE VALUE
-				var combineValue = this.m_Cards[i].value + this.m_Cards[x].value;
-				this.m_Cards[x].value = combineValue;
-				this.m_Cards[i].SetActive(false);
-				this.m_Group.Set(this.m_Cards[i]);
-				// 3. REMOVE DUPLICATE
-				this.m_Cards.Remove (this.m_Cards[i]);
-				this.m_Cards.TrimExcess();
-				// 4. CONTINUE LOOP
-				i = this.m_Cards.Count - 1;
-				x = this.m_Cards.Count - 2;
-				// 5. CHECK SCORE
-				if (checkScore)
-				{
-					multi += 1;
-					this.m_Board.AddScore(combineValue, multi);
+					// 6. BREAK LOOP
+					break;
 				}
 			}
-			else
+			// BOMB && NUMBER || NUMBER && BOMB
+			else if (this.m_Cards[i].cardType == CCard.ECardType.BOMB 
+				|| this.m_Cards[x].cardType == CCard.ECardType.BOMB)
 			{
-				// 5. BREAK LOOP
-				break;
+				// 1. IF SAME VALUE CARD NUMBER
+				if (this.m_Cards[i].value == this.m_Cards[x].value)
+				{
+					// CHECK VALUE
+					if (this.m_Cards[i].value == this.m_Cards[x].value)
+					{
+						for (int index = 0; index < this.m_Cards.Count; index++)
+						{
+							this.m_Board.AddScore(this.m_Cards[index].value, 1);
+						}
+						yield return this.HandleExplosionAllCards(null);
+						// BREAK LOOP
+						break;
+					}
+				}
+				else
+				{
+					// BREAK LOOP
+					break;
+				}
 			}
 		}
 		// UNCHECK CALCULATE
@@ -321,15 +329,19 @@ public class CColumn : MonoBehaviour,
 
 	public virtual void Check2048Card()
 	{
+		bool have2048 = false;
 		for (int i = 0; i < this.m_Cards.Count; i++)
 		{
 			if (this.m_Cards[i].value >= 2048)
 			{
 				this.ExplosionAllCards(null);
+				have2048 = true;
+				break;
 			}
 		}
 		// UI
-		this.m_FirstCard.gameObject.SetActive(true);
+		if (have2048)
+			this.m_FirstCard.gameObject.SetActive(true);
 		// SAVE BOARD 
 		// this.m_Board.SaveBoard();
 	}
@@ -345,13 +357,20 @@ public class CColumn : MonoBehaviour,
 	protected WaitForSeconds m_WaitSortTime = new WaitForSeconds(0.1f);
 	protected IEnumerator HandleExplosionAllCards(System.Action callback)
 	{
-		for (int i = 0; i < this.m_Cards.Count; i++)
+		// CLONE
+		var cards = new List<CCard>(this.m_Cards);
+		// CLEAR
+		this.m_Cards.Clear();
+		this.m_Cards.TrimExcess();
+		for (int i = 0; i < cards.Count; i++)
 		{
 			yield return this.m_WaitSortTime;
-			this.m_Cards[i].Explosion();
+			cards[i].Explosion();
 		}
 		// EXPLOSION
 		this.m_IsExplosing = false;
+		// UI
+		this.m_FirstCard.gameObject.SetActive(true);
 		// CALL EVENTS
 		if (callback != null)
 		{

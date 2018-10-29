@@ -18,6 +18,7 @@ public class CRemoveCard : MonoBehaviour,
 	protected CGroupCard m_Group;
 
 	protected Image m_FilledImage;
+	protected GameObject m_AdsImage;
 
 	protected CAdsSimple m_AdsSimple;
 
@@ -46,6 +47,9 @@ public class CRemoveCard : MonoBehaviour,
 		this.m_FilledImage.fillMethod = Image.FillMethod.Vertical;
 		this.m_FilledImage.fillOrigin = 0;
 		this.m_FilledImage.fillAmount = 0f;
+		// ADS IMAGE
+		this.m_AdsImage = this.transform.Find("AdsImage").gameObject;
+		this.m_AdsImage.SetActive (false);
 		// CARDS
 		this.m_CurrentSize = 0;
 		// ADS
@@ -55,9 +59,15 @@ public class CRemoveCard : MonoBehaviour,
 	public virtual void RemoveCard(CCard card)
 	{
 		if (this.m_CurrentSize >= this.m_MaximumSize)
+		{
 			this.RemoveCardWithAds (card);
+			this.m_AdsImage.SetActive(true);
+		}
 		else
+		{
 			this.RemoveCardSimple (card);
+			this.m_AdsImage.SetActive(false);
+		}
 	}
 
 	public virtual void RemoveCardSimple(CCard card)
@@ -68,16 +78,21 @@ public class CRemoveCard : MonoBehaviour,
 		// FROM
 		var from = this.m_FilledImage.transform.localPosition;
 		// MOVE
-		card.SetAnimation(CCard.EAnimation.DISAPPEAR);
-		card.Move (0.13f, to, from, 0.17f, () => {
-			card.OnDropCard(Vector2.zero);
+ 		card.SetAnimation(CCard.EAnimation.DISAPPEAR);
+		card.isDropped = true;
+		card.Move (0.1f, to, from, 0.2f, () => {
 			card.OnHandDropCard();
 			card.SetActive (false);
 			// RETURN CACHE
 			this.m_Group.Set(card);
 			// UPDATE SIZE
+#if UNITY_DEBUG_MODE
+			this.m_CurrentSize = 0;
+#else
 			this.m_CurrentSize += 1;
+#endif
 			this.m_FilledImage.fillAmount = (float)this.m_CurrentSize / this.m_MaximumSize;
+			this.SetSize(this.m_CurrentSize);
 		});
 	}
 
@@ -125,6 +140,7 @@ public class CRemoveCard : MonoBehaviour,
 		// UPDATE SIZE
 		this.m_CurrentSize = value;
 		this.m_FilledImage.fillAmount = (float)this.m_CurrentSize / this.m_MaximumSize;
+		this.m_AdsImage.SetActive(value >= this.m_MaximumSize);
 	}
 
 	#endregion

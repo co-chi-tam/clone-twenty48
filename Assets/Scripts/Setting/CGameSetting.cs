@@ -67,7 +67,7 @@ public class CGameSetting {
 	#region SCORE
 
 	public static float UI_SCORE_TIMER = 1f;
-	public static string UI_SCORE = "SCORE: {0}";
+	public static string UI_SCORE = "{0}";
 
 	private static string SCORE_SAVE = "SCORE_SAVE";
 	public static int SCORE 
@@ -97,6 +97,25 @@ public class CGameSetting {
 			return (num / 1000).ToString("0.#") + "K";
 
 		return num.ToString("#,0");
+	}
+
+	#endregion
+
+	#region SETTING
+
+	public static string SOUND_ON = "SOUND_ON";
+
+	public static bool SETTING_SOUND
+	{
+		get
+		{
+			return PlayerPrefs.GetInt(SOUND_ON, 1) == 1;
+		}
+		set
+		{
+			PlayerPrefs.SetInt(SOUND_ON, value ? 1 : 0);
+			PlayerPrefs.Save();
+		}
 	}
 
 	#endregion
