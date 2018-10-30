@@ -311,6 +311,8 @@ public class CCard : MonoBehaviour,
 		this.m_DragObject.gameObject.SetActive (false);
 		this.m_ValueText.gameObject.SetActive (false);
 		this.m_HighlightImage.gameObject.SetActive(false);
+		// CLICK SOUND
+		CSoundManager.Instance.Play("sfx_explosion");
 	}
 
 	#endregion

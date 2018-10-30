@@ -103,17 +103,17 @@ public class CGameSetting {
 
 	#region SETTING
 
-	public static string SOUND_ON = "SOUND_ON";
+	public static string SOUND_MUTE = "SOUND_MUTE";
 
-	public static bool SETTING_SOUND
+	public static bool SETTING_SOUND_MUTE
 	{
 		get
 		{
-			return PlayerPrefs.GetInt(SOUND_ON, 1) == 1;
+			return PlayerPrefs.GetInt(SOUND_MUTE, 1) == 1;
 		}
 		set
 		{
-			PlayerPrefs.SetInt(SOUND_ON, value ? 1 : 0);
+			PlayerPrefs.SetInt(SOUND_MUTE, value ? 1 : 0);
 			PlayerPrefs.Save();
 		}
 	}

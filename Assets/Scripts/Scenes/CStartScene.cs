@@ -17,6 +17,11 @@ public class CStartScene : MonoBehaviour {
 
 	public virtual void Init()
 	{
+		// SOUND
+		CSoundManager.Instance.MuteAll(CGameSetting.SETTING_SOUND_MUTE);
+		// ADMOB
+		CAdmobManager.Instance.Init();
+		CAdmobManager.Instance.RequestBanner();
 		// BOARD
 		this.m_Board = GameObject.FindObjectOfType<CBoard>();
 		// PLAY
@@ -26,6 +31,8 @@ public class CStartScene : MonoBehaviour {
 			// PlayerPrefs.DeleteAll();
 			this.gameObject.SetActive(false);
 			this.m_Board.Init();
+			// CLICK SOUND
+			CSoundManager.Instance.Play("sfx_click");
 		});
 		// REFRESH
 		this.m_RefeshButton = this.transform.Find("GroupButtons/RefreshButton").GetComponent<Button>();
@@ -38,6 +45,8 @@ public class CStartScene : MonoBehaviour {
 				CGameSetting.DeleteSave();
 				this.m_Board.Init();
 			}
+			// CLICK SOUND
+			CSoundManager.Instance.Play("sfx_click");
 		});
 	}
 

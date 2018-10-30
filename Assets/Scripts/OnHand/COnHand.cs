@@ -140,6 +140,8 @@ public class COnHand : MonoBehaviour {
 		this.AnimatingACard ();
 		// ADD
 		this.m_OnHandCards.Add (card);
+		// CLICK SOUND
+		CSoundManager.Instance.Play("sfx_draw");
 	}
 
 	public virtual void OnHandACardImmediate(CCard card)

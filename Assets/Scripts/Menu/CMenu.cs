@@ -24,25 +24,30 @@ public class CMenu : MonoBehaviour {
 			{
 				this.m_Board.ResetBoard ();
 			}
+			// CLICK SOUND
+			CSoundManager.Instance.Play("sfx_click");
 		});
 		// SOUND
 		this.m_SoundToggleButton = this.transform.Find("SoundButton").GetComponent<Button>();
 		this.m_SoundOnImage = this.transform.Find("SoundButton/OnImage").gameObject;
 		this.m_SoundOffImage = this.transform.Find("SoundButton/OffImage").gameObject;
-		this.m_SoundOnImage.SetActive(CGameSetting.SETTING_SOUND);
-		this.m_SoundOffImage.SetActive(!CGameSetting.SETTING_SOUND);
+		this.m_SoundOnImage.SetActive(!CGameSetting.SETTING_SOUND_MUTE);
+		this.m_SoundOffImage.SetActive(CGameSetting.SETTING_SOUND_MUTE);
 		this.m_SoundToggleButton.onClick.RemoveAllListeners();
 		this.m_SoundToggleButton.onClick.AddListener(() => {
 			this.SoundToggle();
+			// CLICK SOUND
+			CSoundManager.Instance.Play("sfx_click");
+			CSoundManager.Instance.MuteAll(CGameSetting.SETTING_SOUND_MUTE);
 		});
 	}
 	
 	protected virtual void SoundToggle()
 	{
-		var soundOn = CGameSetting.SETTING_SOUND;
-		CGameSetting.SETTING_SOUND = !soundOn;
-		this.m_SoundOnImage.SetActive(CGameSetting.SETTING_SOUND);
-		this.m_SoundOffImage.SetActive(!CGameSetting.SETTING_SOUND);
+		var soundOn = CGameSetting.SETTING_SOUND_MUTE;
+		CGameSetting.SETTING_SOUND_MUTE = !soundOn;
+		this.m_SoundOnImage.SetActive(!CGameSetting.SETTING_SOUND_MUTE);
+		this.m_SoundOffImage.SetActive(CGameSetting.SETTING_SOUND_MUTE);
 	}
 
 }

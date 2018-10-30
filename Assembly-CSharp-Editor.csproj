@@ -55,6 +55,8 @@
   <ItemGroup>
      <Compile Include="Assets\Editor\CCardEditor.cs" />
      <Compile Include="Assets\Editor\CEditorUtillities.cs" />
+     <None Include="Assets\PlayServicesResolver\Editor\play-services-resolver_v1.2.88.0.txt" />
+     <None Include="Assets\GoogleMobileAds\Editor\GoogleMobileAdsDependencies.xml" />
  <Reference Include="UnityEditor.StandardEvents">
  <HintPath>E:/Test/Gihub/clone-twenty48/trunk/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
  </Reference>
@@ -342,6 +344,18 @@
  </Reference>
  <Reference Include="UnityEngine.StandardEvents">
  <HintPath>C:/Users/pax-tam/AppData/Local/Unity/cache/packages/packages.unity.com/com.unity.standardevents@1.0.13/UnityEngine.StandardEvents.dll</HintPath>
+ </Reference>
+ <Reference Include="Google.VersionHandler">
+ <HintPath>E:/Test/Gihub/clone-twenty48/trunk/Assets/PlayServicesResolver/Editor/Google.VersionHandler.dll</HintPath>
+ </Reference>
+ <Reference Include="Google.JarResolver_v1.2.88.0">
+ <HintPath>E:/Test/Gihub/clone-twenty48/trunk/Assets/PlayServicesResolver/Editor/Google.JarResolver_v1.2.88.0.dll</HintPath>
+ </Reference>
+ <Reference Include="Google.VersionHandlerImpl_v1.2.88.0">
+ <HintPath>E:/Test/Gihub/clone-twenty48/trunk/Assets/PlayServicesResolver/Editor/Google.VersionHandlerImpl_v1.2.88.0.dll</HintPath>
+ </Reference>
+ <Reference Include="Google.IOSResolver_v1.2.88.0">
+ <HintPath>E:/Test/Gihub/clone-twenty48/trunk/Assets/PlayServicesResolver/Editor/Google.IOSResolver_v1.2.88.0.dll</HintPath>
  </Reference>
  <Reference Include="UnityEditor.iOS.Extensions.Xcode">
  <HintPath>C:/Program Files/Unity2018.2.7/Editor/Data/PlaybackEngines/iOSSupport/UnityEditor.iOS.Extensions.Xcode.dll</HintPath>

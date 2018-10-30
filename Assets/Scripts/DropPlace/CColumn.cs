@@ -140,6 +140,8 @@ public class CColumn : MonoBehaviour,
 		{
 			this.AddCardToList (0.1f, 0.3f, card, from, from);
 		}
+		// CLICK SOUND
+		CSoundManager.Instance.Play("sfx_drop");
 	}
 
 	public virtual void AddCardImmediate(CCard card)

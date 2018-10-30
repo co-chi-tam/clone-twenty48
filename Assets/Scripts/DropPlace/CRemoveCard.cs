@@ -94,6 +94,8 @@ public class CRemoveCard : MonoBehaviour,
 			this.m_FilledImage.fillAmount = (float)this.m_CurrentSize / this.m_MaximumSize;
 			this.SetSize(this.m_CurrentSize);
 		});
+		// CLICK SOUND
+		CSoundManager.Instance.Play("sfx_discard");
 	}
 
 	public virtual void RemoveCardWithAds(CCard card)

@@ -123,6 +123,8 @@ public class CBoard : MonoBehaviour  {
 #else
 			this.RedrawWithAbs();
 #endif
+			// CLICK SOUND
+			CSoundManager.Instance.Play("sfx_click");
 		});
 		this.m_UndoButton = this.transform.Find("OnHandPanel/UtilityPanel/UndoButton").GetComponent<Button>();
 		this.m_UndoButton.onClick.RemoveAllListeners();
@@ -132,6 +134,8 @@ public class CBoard : MonoBehaviour  {
 #else
 			this.UndoBoardWithAbs ();
 #endif
+			// CLICK SOUND
+			CSoundManager.Instance.Play("sfx_click");
 		});
 		
 		// EXPLOSION
@@ -241,6 +245,8 @@ public class CBoard : MonoBehaviour  {
 		// HANDLE
 		StopCoroutine (this.HandleAddScore());
 		StartCoroutine (this.HandleAddScore());
+		// CLICK SOUND
+		CSoundManager.Instance.Play("sfx_gain_points");
 	}
 
 	protected WaitForFixedUpdate m_WaitFixedUpdate = new WaitForFixedUpdate();
