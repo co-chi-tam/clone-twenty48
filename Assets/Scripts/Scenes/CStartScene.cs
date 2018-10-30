@@ -7,8 +7,14 @@ public class CStartScene : MonoBehaviour {
 
 	protected Button m_PlayButton;
 	protected Button m_RefeshButton;
-
 	protected CBoard m_Board;
+
+	protected virtual void Awake()
+	{
+		// ADMOB
+		CAdmobManager.Init();
+		CAdmobManager.InitBanner();
+	}
 
 	protected virtual void Start()
 	{
@@ -20,8 +26,7 @@ public class CStartScene : MonoBehaviour {
 		// SOUND
 		CSoundManager.Instance.MuteAll(CGameSetting.SETTING_SOUND_MUTE);
 		// ADMOB
-		CAdmobManager.Instance.Init();
-		CAdmobManager.Instance.RequestBanner();
+		CAdmobManager.ShowBanner();
 		// BOARD
 		this.m_Board = GameObject.FindObjectOfType<CBoard>();
 		// PLAY
