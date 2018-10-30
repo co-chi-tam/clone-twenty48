@@ -200,6 +200,9 @@ public class CBoard : MonoBehaviour  {
 			CGameSetting.DeleteSave();
 			this.ExplosionAllCards (() => {
 				Debug.Log ("COMPLETE MAP");
+				// ADS
+				this.m_AdsSimple.Show();
+				// RESET
 				this.ResetBoard ();
 			});
 		}

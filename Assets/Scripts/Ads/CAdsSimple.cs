@@ -32,6 +32,10 @@ public class CAdsSimple : MonoBehaviour {
 	}
 
 	public virtual void Show() {
+		this.Show (this.placementId);
+	}
+
+	public virtual void Show(string place) {
 		if (Advertisement.IsReady() == false)
 		{
 			this.InitAds();
@@ -39,7 +43,7 @@ public class CAdsSimple : MonoBehaviour {
 		}
 		ShowOptions options = new ShowOptions();
         options.resultCallback = this.HandleShowResult;
-        Advertisement.Show(this.placementId, options);
+        Advertisement.Show(place, options);
 		CGameSetting.ResetTimerToAd();
 		if (this.OnShow != null) {
 			this.OnShow.Invoke ();
