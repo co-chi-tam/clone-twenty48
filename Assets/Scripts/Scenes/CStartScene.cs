@@ -26,7 +26,7 @@ public class CStartScene : MonoBehaviour {
 		// SOUND
 		CSoundManager.Instance.MuteAll(CGameSetting.SETTING_SOUND_MUTE);
 		// ADMOB
-		CAdmobManager.ShowBanner();
+		CAdmobManager.ShowHideBanner(true);
 		// BOARD
 		this.m_Board = GameObject.FindObjectOfType<CBoard>();
 		// PLAY
