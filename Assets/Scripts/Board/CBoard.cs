@@ -6,6 +6,8 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using TinyJSON;
+using GooglePlayGames;
+using UnityEngine.SocialPlatforms;
 
 public class CBoard : MonoBehaviour  {
 
@@ -248,8 +250,20 @@ public class CBoard : MonoBehaviour  {
 		// HANDLE
 		StopCoroutine (this.HandleAddScore());
 		StartCoroutine (this.HandleAddScore());
+		if (CStartScene.IS_LEADERBOARD_INIT)
+		{
+			// post score CGameSetting.SCORE to leaderboard ID "Cfji293fjsie_QA")
+			Social.ReportScore(CGameSetting.SCORE, GPGSIds.leaderboard_score_leaderboard, (bool success) => {
+				// handle success or failure
+				if (success)
+				{
+					// CLICK SOUND
+					CSoundManager.Instance.Play("sfx_gain_points");
+				}
+			});
+		}
 		// CLICK SOUND
-		CSoundManager.Instance.Play("sfx_gain_points");
+		// CSoundManager.Instance.Play("sfx_gain_points");
 	}
 
 	protected WaitForFixedUpdate m_WaitFixedUpdate = new WaitForFixedUpdate();

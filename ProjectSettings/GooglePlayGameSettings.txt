@@ -1,0 +1,9 @@
+lastUpgrade=00957
+proj.pluginVersion=0.9.57
+proj.AppId=987607560728
+and.BundleId=com.dorianco.solitaire_2048
+proj.classDir=Assets
+proj.ConstantsClassName=GPGSIds
+and.ResourceData=%3c%3fxml+version%3d%221.0%22+encoding%3d%22utf-8%22%3f%3e%0d%0a%3c%21--%0d%0aGoogle+Play+game+services+IDs.%0d%0aSave+this+file+as+res%2fvalues%2fgames-ids.xml+in+your+project.%0d%0a--%3e%0d%0a%3cresources%3e%0d%0a++%3c%21--+app_id+--%3e%0d%0a++%3cstring+name%3d%22app_id%22+translatable%3d%22false%22%3e987607560728%3c%2fstring%3e%0d%0a++%3c%21--+package_name+--%3e%0d%0a++%3cstring+name%3d%22package_name%22+translatable%3d%22false%22%3ecom.dorianco.solitaire_2048%3c%2fstring%3e%0d%0a++%3c%21--+leaderboard+Score+leaderboard+--%3e%0d%0a++%3cstring+name%3d%22leaderboard_score_leaderboard%22+translatable%3d%22false%22%3eCgkImOT9j98cEAIQAg%3c%2fstring%3e%0d%0a++%3c%21--+event+Gain+4k+point.+--%3e%0d%0a++%3cstring+name%3d%22event_gain_4k_point.%22+translatable%3d%22false%22%3eCgkImOT9j98cEAIQAQ%3c%2fstring%3e%0d%0a++%3c%21--+quest+Gain+4k+point+--%3e%0d%0a++%3cstring+name%3d%22quest_gain_4k_point%22+translatable%3d%22false%22%3eCgkImOT9j98cEAIQAw%3c%2fstring%3e%0d%0a%3c%2fresources%3e%0d%0a
+and.ClientId=
+android.SetupDone=true
